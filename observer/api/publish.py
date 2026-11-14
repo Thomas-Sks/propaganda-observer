@@ -55,7 +55,7 @@ async def _publish(slug: str) -> None:
 
             base = f"/api/events/{slug}"
             _status(slug, state="running", step="views")
-            for p in ("", "/progress", "/summary", "/network", "/accounts", "/suspects", "/coordination", "/themes",
+            for p in ("", "/progress", "/summary", "/network", "/accounts", "/suspects", "/coordination", "/themes", "/diffusion",
                       "/clusters"):
                 r = await grab("GET", base + p)
                 if p == "" and r.status_code != 200:

@@ -21,13 +21,26 @@ export interface Publication {
   account_id: string; similarity: number | null; links: string[];
   transcript?: string | null; ocr?: string | null; caption?: string;
 }
-export interface StoryDetail extends StoryCard {
-  signals: Signal[]; publications: Publication[]; accounts_detail: Account[];
+export interface Hop {
+  from_uid: string; to_uid: string; from_platform: string; to_platform: string; from_author: string; to_author: string;
+  from_label: string; to_label: string; from_ts: string; to_ts: string; delay_min: number;
+  kind: "proven" | "inferred"; why: string; story: string | null; story_title?: string | null; text: string;
 }
+export interface StoryDiffusion { entries: { platform: string; first_ts: string; n: number; precise: boolean }[]; hops: Hop[] }
+export interface StoryDetail extends StoryCard {
+  signals: Signal[]; publications: Publication[]; accounts_detail: Account[]; diffusion?: StoryDiffusion;
+}
+export interface Flow {
+  from: string; to: string; n: number; proven: number; median_min: number; p25_min: number; p75_min: number;
+  fast_share: number; slow_share: number; delays: { min: number; kind: "proven" | "inferred" }[];
+}
+export interface Diffusion { flows: Flow[]; hops: Hop[]; n_hops: number; fast_min: number; slow_min: number; method: string[] }
+export const getDiffusion = (s: string) => api<Diffusion>(`/api/events/${s}/diffusion`);
 export interface Summary {
   event: { slug: string; label: string; description?: string; sources: string[]; start?: string; end?: string; keywords: string[]; languages: string[] };
   kpis: { items: number; accounts: number; platforms: number; stories: number; priority: number; review: number; promotes: number; debunks: number };
   daily: ({ day: string } & Partial<Record<Stance, number>>)[];
+  daily_alerts?: ({ day: string } & Partial<Record<"priority" | "review" | "suspect" | "organic" | "none", number>>)[];
   peaks: { period: string; count: number; z: number; baseline: number; explanation: string }[];
   platform_daily: Record<string, [string, number][]>;
   stories: StoryCard[];

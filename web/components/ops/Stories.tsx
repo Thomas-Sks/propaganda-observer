@@ -5,6 +5,7 @@ import { useView } from "@/lib/useView";
 import { PLATFORM_NAME, SEVERITY, STANCE, fmtTs, getStory, getSummary, type Account, type StoryDetail } from "@/lib/views";
 import { Collapsible, Empty, FlagChips, PlatformBadge, Platforms, SeverityBadge, SignalBars, Sparkline, StanceChip } from "@/components/ui/kit";
 import Investigation from "./Investigation";
+import { HopList, fmtDelay } from "./Diffusion";
 
 export default function Stories({ slug }: { slug: string }) {
   const { data } = useView(() => getSummary(slug), [slug]);
@@ -104,6 +105,7 @@ function Detail({ slug, id }: { slug: string; id: string }) {
 
       <Collapsible title="How it spread" hint="one row per platform, same time axis" defaultOpen>
         <Spread d={d} />
+        {d.diffusion && d.diffusion.entries.length > 1 && <CrossPlatform d={d} />}
       </Collapsible>
 
       <Collapsible title="Accounts involved" count={d.accounts_detail.length} hint="risk flags are explained on hover">
@@ -217,6 +219,29 @@ function EgoGraph({ d, onOpen }: { d: StoryDetail; onOpen: (id: string) => void 
         <span><b style={{ color: "var(--sev-review)" }}>●</b> account &lt; 30 days</span>
         <span><b style={{ color: "var(--sev-organic)" }}>●</b> no risk flag</span>
       </div>
+    </div>
+  );
+}
+
+
+/** Arrivée sur chaque plateforme (première apparition dans NOS données, pas une origine) et sauts entre plateformes. */
+function CrossPlatform({ d }: { d: StoryDetail }) {
+  const dif = d.diffusion!;
+  const t0 = +new Date(dif.entries[0].first_ts);
+  return (
+    <div className="mt-4 border-t border-line pt-3">
+      <div className="text-[12.5px] font-semibold text-muted">ACROSS PLATFORMS</div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px]">
+        {dif.entries.map((e, k) => (
+          <span key={e.platform} className="flex items-center gap-1.5">
+            {k > 0 && <span className="text-muted">→</span>}
+            <PlatformBadge p={e.platform} />
+            <span className="num text-[12px] text-muted">{k === 0 ? "first seen" : `+${fmtDelay((+new Date(e.first_ts) - t0) / 60000)}`}{e.precise ? "" : " (date only)"}</span>
+          </span>
+        ))}
+      </div>
+      <p className="mt-1 text-[11.5px] text-faint">First appearance in our data on each platform, not the origin: we do not see X or private groups.</p>
+      {dif.hops.length > 0 && <div className="mt-2 -mx-4"><HopList hops={dif.hops} compact /></div>}
     </div>
   );
 }

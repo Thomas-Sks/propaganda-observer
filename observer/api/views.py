@@ -155,10 +155,27 @@ async def summary(slug: str) -> dict:
     st = _item_stance(clusters)
     series: dict[str, Counter] = defaultdict(Counter)        # jour -> position -> n
     by_platform: dict[str, Counter] = defaultdict(Counter)   # plateforme -> jour -> n
+    alerts: dict[str, Counter] = defaultdict(Counter)        # jour -> niveau d'alerte -> n
+    level_of: dict[str, str] = {}
+    rank = {"priority": 3, "review": 2}
+    for c in clusters:
+        for u in c.item_uids:
+            if rank.get(c.level, 0) > rank.get(level_of.get(u, ""), 0) or u not in level_of:
+                level_of[u] = c.level if c.level in rank else level_of.get(u, "organic")
+    all_items = await db.load_items(slug, limit=20000)
+    likely = {r["id"] for r in await _suspect_rows(slug, items, clusters, all_items) if r["level"] == "likely"}
     for i in items:
         d = i.ts.date().isoformat()
         series[d][st.get(i.uid, "unclassified")] += 1
         by_platform[i.platform][d] += 1
+        lvl = level_of.get(i.uid)
+        if lvl in rank:
+            cat = lvl
+        elif i.author_pseudo in likely or st.get(i.uid) == "promotes":
+            cat = "suspect"
+        else:
+            cat = "organic" if lvl else "none"
+        alerts[d][cat] += 1
     accounts = _accounts(items, clusters)
     stories = sorted((_story_card(c, by_uid) for c in clusters),
                      key=lambda s: (-{"priority": 2, "review": 1}.get(s["level"], 0), -s["score"], -s["accounts"]))
@@ -176,6 +193,8 @@ async def summary(slug: str) -> dict:
             "debunks": sum(stance_of(c) == "debunks" for c in clusters),
         },
         "daily": [{"day": d, **dict(series[d])} for d in sorted(series)],
+        # Même série, par niveau d'alerte : narratif Priority / Review, compte suspect ou fausse affirmation reprise
+        "daily_alerts": [{"day": d, **dict(alerts[d])} for d in sorted(alerts)],
         "peaks": _peaks(series),
         "platform_daily": {p: sorted(c.items()) for p, c in by_platform.items()},
         "stories": stories,
@@ -202,8 +221,13 @@ async def story(slug: str, story_id: str) -> dict:
         except Exception:
             pass
     accounts = _accounts(its, [c])
+    from observer.tools.diffusion import story_diffusion
+    all_items = await db.load_items(slug, limit=20000)
+    mine = set(c.item_uids)
+    st_hops = [h for h in await _diffusion_hops(slug, items, clusters, all_items) if h["from_uid"] in mine and h["to_uid"] in mine]
     return {
         **_story_card(c, by_uid),
+        "diffusion": story_diffusion(its, st_hops),
         "signals": [s.model_dump() for s in c.signals],
         "publications": [{
             "uid": i.uid, "platform": i.platform, "format": i.format or _guess_format(i), "ts": i.ts.isoformat(), "url": i.url, "text": i.full_text()[:600],
@@ -292,6 +316,43 @@ async def coordination(slug: str) -> dict:
         return co.build(scope, _accounts(scope, clusters), sus)
     out = await _cached("coordination", slug, len(all_items) + len(clusters), max((i.ts for i in all_items), default=None), run)
     return {**out, "generated_at": datetime.now(timezone.utc).isoformat()}
+
+
+async def _diffusion_hops(slug: str, items, clusters, all_items) -> list[dict]:
+    """Sauts entre plateformes (tools/diffusion.py), calculés sur tout le collecté, gardés si une extrémité est
+    pertinente pour l'événement ; libellés de comptes pseudonymisés."""
+    from observer.tools import diffusion as dif
+
+    async def run():
+        relevant = {i.uid for i in items}
+        label = {i.author_pseudo: account_label(i) for i in all_items}
+        hs = [h for h in dif.hops(all_items, clusters) if h["from_uid"] in relevant or h["to_uid"] in relevant]
+        for h in hs:
+            h["from_label"], h["to_label"] = label.get(h["from_author"], "?"), label.get(h["to_author"], "?")
+        return hs
+    return await _cached("diffusion", slug, len(all_items) + len(clusters), max((i.ts for i in all_items), default=None), run)
+
+
+@router.get("/diffusion")
+async def diffusion(slug: str) -> dict:
+    """Diffusion entre plateformes : flux A → B avec délais, sauts prouvés ou déduits (pas de « patient zéro »)."""
+    from observer.tools import diffusion as dif
+    _, items, clusters = await _load(slug)
+    all_items = await db.load_items(slug, limit=20000)
+    hs = await _diffusion_hops(slug, items, clusters, all_items)
+    titles = {c.id: c.title for c in clusters}
+    return {"flows": dif.flows(hs), "hops": [{**h, "story_title": titles.get(h["story"])} for h in hs[:300]],
+            "n_hops": len(hs), "fast_min": dif.FAST_MIN, "slow_min": dif.SLOW_MIN,
+            "method": [
+                "A hop is a post on platform B that takes up an earlier post from platform A (up to 72 h before).",
+                "Proven hop: the post links to the earlier post or cites the Telegram channel that published it. "
+                "Inferred hop: otherwise, the earlier post whose own text is the closest (similarity ≥ 0.3).",
+                "Groups examined: every narrative, plus every group of near-identical posts across everything collected.",
+                "Posts with hour-rounded timestamps (Google News, past days) are excluded: their delays would be wrong.",
+                "There is no 'patient zero': we only see part of the web (no X, no private groups), so the first post "
+                "in our data is not the origin.",
+            ],
+            "generated_at": datetime.now(timezone.utc).isoformat()}
 
 
 @router.get("/themes")

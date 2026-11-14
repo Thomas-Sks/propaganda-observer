@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import type { Severity, Stance } from "./views";
 
-export type Tab = "brief" | "stories" | "network" | "coordination" | "themes" | "accounts";
+export type Tab = "brief" | "stories" | "network" | "coordination" | "diffusion" | "themes" | "accounts";
 
 export interface Step { key: string; label: string; state: "pending" | "running" | "done" | "skipped" | "error"; count?: number | null; detail?: string; at?: string }
 export interface Progress { pass: { state?: "running" | "idle"; at?: string; next_at?: string; new?: number }; steps: Step[] }

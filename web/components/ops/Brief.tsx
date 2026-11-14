@@ -7,11 +7,20 @@ import { FirstRun } from "./Progress";
 import { Collapsible, Empty, FlagChips, Kpi, PlatformBadge, Platforms, Section, SeverityBadge, Sparkline, StackedBars, StanceChip } from "@/components/ui/kit";
 
 const ORDER: Stance[] = ["promotes", "neutral", "debunks", "unclassified"];
+/** Mode « Alerts » : le rouge ne sert qu'à ce qui mérite un examen (narratifs signalés, comptes suspects, fausse affirmation). */
+const ALERTS = [
+  { key: "priority", label: "Priority narrative", color: "var(--sev-priority)" },
+  { key: "review", label: "Needs review", color: "var(--sev-review)" },
+  { key: "suspect", label: "Suspected account or false claim", color: "#f87171" },
+  { key: "organic", label: "Narrative without alert", color: "#94a3b8" },
+  { key: "none", label: "Not in a narrative", color: "#e2e8f0" },
+];
+type Mode = "alerts" | "stance" | "platform";
 
 export default function Brief({ slug }: { slug: string }) {
   const { data } = useView(() => getSummary(slug), [slug]);
   const { filters, openStory, openAccount } = useOps();
-  const [byPlatform, setByPlatform] = useState(false);
+  const [mode, setMode] = useState<Mode>("alerts");
 
   const range = useMemo(() => (data?.daily ?? []).map((d) => d.day), [data]);
   if (!data) return <div className="p-8"><Empty text="Loading the brief…" /></div>;
@@ -52,19 +61,23 @@ export default function Brief({ slug }: { slug: string }) {
         </div>
 
         <div className="rounded-md border border-line bg-panel p-4">
-          <Section title="Activity over time" hint={byPlatform ? "publications per day, by platform" : "publications per day, by stance of their narrative"}
+          <Section title="Activity over time"
+            hint={mode === "platform" ? "publications per day, by platform" : mode === "stance" ? "publications per day, by stance of their narrative"
+              : "publications per day · red = needs a look (flagged narrative, suspected account or false claim)"}
             right={
               <div className="inline-flex rounded-md border border-line text-[12.5px]">
-                {[["Stance", false], ["Platform", true]].map(([l, v]) => (
-                  <button key={String(l)} onClick={() => setByPlatform(v as boolean)}
-                    className={`px-3 py-1 ${byPlatform === v ? "bg-accent text-white" : "text-muted hover:text-text"}`}>{l}</button>
+                {([["Alerts", "alerts"], ["Stance", "stance"], ["Platform", "platform"]] as [string, Mode][]).map(([l, v]) => (
+                  <button key={v} onClick={() => setMode(v)}
+                    className={`px-3 py-1 ${mode === v ? "bg-accent text-white" : "text-muted hover:text-text"}`}>{l}</button>
                 ))}
               </div>
             }>
-            {byPlatform
+            {mode === "platform"
               ? <StackedBars data={platData} keys={platforms.map((p, i) => ({ key: p, label: PLATFORM_NAME[p] ?? p, color: pcolor[p] ?? shades[i % shades.length] }))} />
-              : <StackedBars data={data.daily as never} keys={ORDER.map((s) => ({ key: s, label: STANCE[s].label, color: STANCE[s].color }))}
-                  marks={data.peaks.map((p) => ({ day: p.period, label: p.explanation }))} />}
+              : mode === "stance"
+                ? <StackedBars data={data.daily as never} keys={ORDER.map((s) => ({ key: s, label: STANCE[s].label, color: STANCE[s].color }))}
+                    marks={data.peaks.map((p) => ({ day: p.period, label: p.explanation }))} />
+                : <StackedBars data={(data.daily_alerts ?? []) as never} keys={ALERTS} marks={data.peaks.map((p) => ({ day: p.period, label: p.explanation }))} />}
             {data.peaks.length > 0 && (
               <div className="mt-3 rounded-md bg-panel-2 px-3 py-2 text-[13px]">
                 <b>Burst detected:</b> {data.peaks.map((p) => `${fmtDay(p.period)} — ${p.explanation}`).join(" · ")}. A burst alone is not a sign of manipulation: real events create them too.

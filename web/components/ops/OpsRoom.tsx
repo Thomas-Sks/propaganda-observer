@@ -17,12 +17,14 @@ import { isAdmin, useSession } from "@/lib/auth-client";
 
 const NetworkView = dynamic(() => import("./NetworkView"), { ssr: false });
 const Coordination = dynamic(() => import("./Coordination"), { ssr: false });
+const Diffusion = dynamic(() => import("./Diffusion"), { ssr: false });
 
 const TABS: { id: Tab; label: string; hint: string }[] = [
   { id: "brief", label: "Brief", hint: "The campaign, its activity over time, what to review first" },
   { id: "stories", label: "Narratives", hint: "Each narrative: verdict, why, spread, evidence" },
   { id: "network", label: "Network", hint: "Which accounts push the same narratives" },
   { id: "coordination", label: "Coordination", hint: "Accounts that act together: same text, link or hashtags within seconds" },
+  { id: "diffusion", label: "Diffusion", hint: "How content moves between platforms, and how fast" },
   { id: "themes", label: "Themes", hint: "What is being pushed, by whom, in which language, over time" },
   { id: "accounts", label: "Accounts", hint: "Every account and source, with risk flags" },
 ];
@@ -67,6 +69,7 @@ export default function OpsRoom({ slug, label }: { slug: string; label: string }
         {tab === "stories" && <Stories slug={slug} />}
         {tab === "network" && <NetworkView slug={slug} />}
         {tab === "coordination" && <Coordination slug={slug} />}
+        {tab === "diffusion" && <Diffusion slug={slug} />}
         {tab === "themes" && <Themes slug={slug} />}
         {tab === "accounts" && <Accounts slug={slug} />}
       </div>
