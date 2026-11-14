@@ -4,3 +4,5 @@ node_modules/
 .next/
 data/raw/
 __pycache__/
+*.pyc
+data/*.session

@@ -1,0 +1,26 @@
+# Registre de sources « listées » : utilisé comme SIGNAL (jamais comme verdict).
+# Généraliste : plusieurs pays et catégories. Chaque entrée cite la référence publique qui fonde l'étiquette.
+# Champs : domain, label, category (state_media | influence_network | sanctioned | fabricated_site), country, ref
+- {domain: rt.com, label: "Russian state media (EU-sanctioned)", category: state_media, country: RU, ref: "EU Council Regulation 2022/350"}
+- {domain: sputniknews.com, label: "Russian state media (EU-sanctioned)", category: state_media, country: RU, ref: "EU Council Regulation 2022/350"}
+- {domain: sputnikglobe.com, label: "Russian state media (EU-sanctioned)", category: state_media, country: RU, ref: "EU Council Regulation 2022/350"}
+- {domain: ria.ru, label: "Russian state media (EU-sanctioned)", category: state_media, country: RU, ref: "EU sanctions packages 2024"}
+- {domain: tass.ru, label: "Russian state news agency", category: state_media, country: RU, ref: "State-owned (Wikipedia: TASS)"}
+- {domain: tass.com, label: "Russian state news agency", category: state_media, country: RU, ref: "State-owned (Wikipedia: TASS)"}
+- {domain: tsargrad.tv, label: "Russian state-aligned media (EU-sanctioned)", category: sanctioned, country: RU, ref: "EU sanctions"}
+- {domain: inosmi.ru, label: "Russian state media (RIA group)", category: state_media, country: RU, ref: "RIA Novosti group"}
+- {domain: news-front.su, label: "Propaganda outlet (EU-sanctioned)", category: sanctioned, country: RU, ref: "EU sanctions"}
+- {domain: southfront.press, label: "Propaganda outlet (US-sanctioned)", category: sanctioned, country: RU, ref: "US Treasury OFAC"}
+- {domain: strategic-culture.su, label: "Outlet tied to foreign intelligence (US State Dept)", category: influence_network, country: RU, ref: "US State Dept GEC report 2020"}
+- {domain: strategic-culture.org, label: "Outlet tied to foreign intelligence (US State Dept)", category: influence_network, country: RU, ref: "US State Dept GEC report 2020"}
+- {domain: news-pravda.com, label: "Pravda / Portal Kombat network", category: influence_network, country: RU, ref: "VIGINUM report Feb 2024; CheckFirst"}
+- {domain: cgtn.com, label: "Chinese state media", category: state_media, country: CN, ref: "State-owned (CCTV group)"}
+- {domain: globaltimes.cn, label: "Chinese state media", category: state_media, country: CN, ref: "People's Daily group"}
+- {domain: xinhuanet.com, label: "Chinese state news agency", category: state_media, country: CN, ref: "State-owned"}
+- {domain: news.cn, label: "Chinese state news agency", category: state_media, country: CN, ref: "State-owned (Xinhua)"}
+- {domain: chinadaily.com.cn, label: "Chinese state media", category: state_media, country: CN, ref: "State-owned"}
+- {domain: presstv.ir, label: "Iranian state media (US/EU-sanctioned)", category: sanctioned, country: IR, ref: "US Treasury OFAC; EU sanctions"}
+- {domain: hispantv.com, label: "Iranian state media", category: state_media, country: IR, ref: "IRIB group"}
+- {domain: tasnimnews.com, label: "IRGC-affiliated media", category: state_media, country: IR, ref: "US Treasury designations"}
+- {domain: kcna.kp, label: "North Korean state media", category: state_media, country: KP, ref: "State-owned"}
+- {domain: telesurtv.net, label: "Venezuelan state-funded media", category: state_media, country: VE, ref: "State-funded"}

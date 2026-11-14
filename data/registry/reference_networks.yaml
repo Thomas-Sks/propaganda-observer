@@ -1,0 +1,15 @@
+# Réseaux d'influence documentés publiquement, utilisés comme SOURCES DE RÉFÉRENCE optionnelles.
+# Pour chaque événement, leurs publications ne sont gardées que si elles sont pertinentes (filtre de pertinence).
+# Ajouter un réseau = ajouter une entrée ; aucun code spécifique.
+- name: Pravda / Portal Kombat
+  label: "Pravda network site (VIGINUM Portal Kombat / CheckFirst)"
+  ref: "https://www.sgdsn.gouv.fr/publications/portal-kombat ; https://github.com/CheckFirstHQ/pravda-network"
+  # Flux RSS (texte intégral) : éditions suivies par défaut
+  rss: [francais, france, deutsch, germany, uk, usa, eu, nato, ukraine, poland, italy, spanish, belgique, suisse, netherlands, romania, moldova]
+  rss_template: "https://{sub}.news-pravda.com/rss.xml"
+  # Canaux Telegram qui alimentent le réseau (référentiel CheckFirst)
+  telegram_seeds:
+    checkfirst_json: "https://raw.githubusercontent.com/CheckFirstHQ/pravda-network/main/json/{domain}_viz.json"
+    domain: francais.news-pravda.com
+    top: 30
+    label: "Pravda network feeder (CheckFirst)"

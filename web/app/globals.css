@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* Tokens — voir UI.md §1. Une seule couleur d'accent ; la couleur porte du sens, jamais de la déco. */
+:root {
+  /* v3 — plus de contraste. Chaque couleur garde UN sens (voir UI.md) :
+     marine = structure/en-tête · bleu vif = interaction · rouge/orange/vert = SÉVÉRITÉ · violet/cyan/ardoise = POSITION */
+  --bg: #eef1f6;
+  --panel: #ffffff;
+  --panel-2: #f4f6fa;
+  --line: #dde2ea;
+  --line-strong: #c3cad6;
+  --text: #0f172a;
+  --muted: #475569;
+  --faint: #7c8798;
+  --accent: #2457f5;
+  --navy: #0f1b3d;
+
+  /* Sévérité (alertes) : feu tricolore franc */
+  --sev-priority: #dc2626;
+  --sev-review: #ea7a00;
+  --sev-organic: #16a34a;
+
+  /* Position vis-à-vis du récit */
+  --st-promotes: #9333ea;
+  --st-debunks: #0891b2;
+  --st-neutral: #64748b;
+  --st-unclassified: #cbd5e1;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-navy: var(--navy);
+  --color-sev-priority: var(--sev-priority);
+  --color-sev-review: var(--sev-review);
+  --color-sev-organic: var(--sev-organic);
+  --color-st-promotes: var(--st-promotes);
+  --color-st-debunks: var(--st-debunks);
+  --color-st-neutral: var(--st-neutral);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --radius-sm: 2px;
+  --radius-md: 3px;
+}
+
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: var(--font-plex-sans), system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+.num { font-family: var(--font-plex-mono), monospace; font-variant-numeric: tabular-nums; }
+::selection { background: #cfe0ff; color: var(--text); }
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+/* Grille de fond très discrète */
+.grid-bg {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-color: var(--bg);
+  background-position: -1px -1px;
+}
+
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] > summary .chev { transform: rotate(90deg); }
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+.live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+@keyframes row-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
+.row-in { animation: row-in .35s ease-out both; }

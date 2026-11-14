@@ -164,3 +164,26 @@ web/
     graph/  map/  timeline/  feed/  inspector/  evidence/  debate/  command/
   lib/ stream.ts  store.ts  api.ts  tokens.css
 ```
+
+---
+
+# v2 — refonte (14/11/2026), remplace les sections 1 à 4 ci-dessus
+
+Inspirations documentées : Blackbird.AI Narrative Details (ordre de lecture), Hoaxy (couleur des liens = position, des nœuds = risque), CooRnet (graphe projeté comptes ↔ comptes), Maltego (graphe + tableau synchronisé), Linkurious (file de cas triée), NewsGuard (fiche de récit), Cambridge Intelligence (plafond de nœuds, légende permanente).
+
+**Thème clair. Une couleur = une seule information :**
+
+| Information | Encodage |
+|---|---|
+| Sévérité (alertes) | Priority rouge `--sev-priority`, Review ambre `--sev-review`, Organic gris `--sev-organic` |
+| Position vs récit | Reprend violet ▲ `--st-promotes`, Dément sarcelle ✓ `--st-debunks`, Neutre ardoise ● `--st-neutral` |
+| Plateforme | badges texte monochromes (WEB, BSKY, YT, TT, IG, TG), jamais de couleur |
+| Interaction | bleu `--accent` uniquement |
+
+**Écrans** (`web/components/ops/`) : barre de filtres globale persistante (plateformes, position, sévérité) +
+- **Brief** : fiche du récit repliable, compteurs, activité par jour (empilée par position ou par plateforme), petits multiples par plateforme, histoires à examiner, principaux amplificateurs.
+- **Stories** : file triée par sévérité + détail (sévérité → position citée → chiffres → sections repliables : pourquoi, propagation, comptes, réseau de l'histoire, publications avec % de similarité de sens, méthode).
+- **Network** : graphe projeté comptes ↔ comptes (lien = même histoire, épaisseur = nb d'histoires, couleur = position), nœud = risque du compte, communautés nommées, légende repliable, tableau synchronisé, double-clic = fiche.
+- **Accounts** : tableau triable avec indicateurs de risque expliqués ; tiroir latéral par compte.
+
+Données : `observer/api/views.py` (`/summary`, `/stories/{id}`, `/network`, `/accounts`, `/accounts/{id}`).

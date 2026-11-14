@@ -13,7 +13,7 @@
 
 ## 1. Vision en une phrase
 
-On saisit un événement en texte libre, par exemple « les manifestations en France en novembre ». Le système trouve lui-même les mots-clés et hashtags, surveille en direct YouTube/Shorts, TikTok, Instagram, X, Bluesky, Mastodon, Telegram et les sites web, puis **repère le même contenu republié d'une plateforme à l'autre**. Il en sort un verdict expliqué, avec des preuves cliquables.
+On saisit un événement en texte libre, par exemple « les manifestations en France en novembre ». Le système trouve lui-même les mots-clés et hashtags, surveille en direct YouTube/Shorts, TikTok, Instagram, Bluesky, Mastodon, Telegram et les sites web, puis **repère le même contenu republié d'une plateforme à l'autre**. Il en sort un verdict expliqué, avec des preuves cliquables.
 
 En plus, n'importe qui peut coller une URL, un domaine ou un compte et obtenir une **fiche de provenance** (« Trust card ») : un score expliqué critère par critère, dont la fiabilité est mesurée et affichée.
 
@@ -85,12 +85,15 @@ Les liens forment un graphe biparti contenus ↔ comptes. Un **cluster cross-pla
 **Les sites sont découverts à partir de l'événement, pas tirés d'une liste fixe.** Les listes connues (Pravda, Doppelganger, Storm-1516, Paperwall, Iffy…) sont un **critère du score**, pas la source.
 
 Découverte en continu (outil `discover_sites`) :
-1. Mots-clés de l'événement → recherches d'actualité live (GDELT DOC, mises à jour toutes les 15 min ; Google News RSS) : remontent aussi les petits sites inconnus.
-2. Liens partagés dans les posts sociaux collectés sur l'événement (déroulés et canonicalisés).
-3. Certificate Transparency : nouveaux domaines dont le nom contient les mots-clés de l'événement ou imite un média (souvent visibles avant la mise en ligne).
-4. Chaque domaine découvert passe dans `provenance_score` ; les articles récupérés alimentent `find_copypasta` / `d3lta_match`.
+1. **Google News RSS** (✅ testé : 100 items en 1,5 s ; domaine source en clair dans `<source url>` ; URL réelle décodable avec `googlenewsdecoder` si besoin). Biais : ne voit que ce que Google indexe.
+2. **Fichiers GDELT toutes les 15 min** (✅ testé : `data.gdeltproject.org/gdeltv2/lastupdate.txt` → GKG ≈ 2,6 Mo zippé), filtrés en local par mots-clés et URL. La DOC API GDELT est **non fiable** (429 et réponses vides) : option avec cache seulement.
+3. **Longue traîne hors Google** : Brave Search API, Exa ou Tavily (offres gratuites, non testés).
+4. **Liens partagés dans les posts sociaux** de l'événement (déroulés, canonicalisés) : principal canal d'amplification de Storm-1516 et Doppelganger, et remonte des domaines que Google n'indexe pas.
+5. **Certificate Transparency** : `certstream-server-go` **auto-hébergé** sur le VPS (le serveur public CaliDog ne répond plus), filtré par mots-clés de l'événement et ressemblance avec des noms de médias. crt.sh en complément, par domaine uniquement (pas de recherche par sous-chaîne).
+6. Le LLM ajoute aux mots-clés des **variantes typosquat** des médias susceptibles d'être imités.
+7. Chaque domaine découvert (domaine enregistrable, dédoublonné) passe dans `provenance_score` ; les articles récupérés alimentent `find_copypasta` / `d3lta_match`.
 
-*(Disponibilité et limites exactes de GDELT, Google News RSS et des flux CT : vérification en cours, voir §11.)*
+**Listes de réseaux connus (features)** : CheckFirst Pravda (✅ mise à jour toutes les heures, domaines tirés des noms de fichiers `json/*_viz.json`), Storm-1516 (✅ `dszalkowski/storm-1516`, liste .txt issue du rapport VIGINUM, dernière mise à jour 06/2025), Meta CIB/Doppelganger (✅ CSV `facebook/threat-research/indicators/csv`, dont H1 2026), CopyCop (Recorded Future, annexes PDF à parser), Paperwall (Citizen Lab, 123 domaines dans le rapport), Iffy, Lin et al.
 
 - Les liens présents dans les posts sont comparés à la **base de réputation** (§5, outil `lookup_reputation`).
 - **Sans lien** : la transcription ou l'OCR d'une vidéo est comparée par D3lta et MinHash au texte des articles découverts pour l'événement et à ceux des réseaux connus (dont Pravda via CheckFirst, mis à jour toutes les heures). Une vidéo TikTok qui lit un article Pravda est donc détectée même sans URL.
@@ -144,7 +147,7 @@ Découverte en continu (outil `discover_sites`) :
 | TikTok | Apify `clockworks/tiktok-scraper` (≈ 1,70 $/1 000) ; EnsembleData en synchrone (50 unités/jour gratuites) ; Creative Center via un acteur Apify pour les hashtags tendance | Abonnés, abonnements, nombre de vidéos (âge estimé par la plus ancienne vidéo) | ≈ 20-50 $ au total | 🟡 à brancher |
 | Instagram / Reels | Apify `instagram-hashtag-scraper` + `instagram-profile-scraper` (option « About » : date d'inscription) | Abonnés, abonnements, posts, date d'inscription | Inclus ci-dessus | 🟡 à brancher |
 | Facebook (P1) | **Pages et groupes publics uniquement**, via un scraper (Apify ou Bright Data), à vérifier. Graph API sans recherche publique, Meta Content Library réservée aux chercheurs. **Groupes privés exclus** : y entrer avec de faux comptes reviendrait à de l'infiltration, contraire aux CGU, et les opinions politiques sont des données sensibles (RGPD art. 9) | Selon le scraper | Crédits Apify | ❓ à vérifier |
-| X / Twitter | **API officielle en pay-per-use** (depuis février 2026 : 5 $/1 000 posts lus, 10 $/1 000 utilisateurs, 20 $ offerts) : stream filtré sur les hashtags suivis + recherche récente 7 jours + lookup des auteurs. Secours **validé par l'équipe** : TwitterAPI.io (0,15 $/1 000, non autorisé par X, volumes faibles) ; lots ponctuels : Apify `apidojo/tweet-scraper` | `created_at`, abonnés, abonnements, `tweet_count`, photo, `verified_type` (le champ `source` n'est pas garanti par l'API officielle) | ≈ 50-100 $ pour 10-20 k tweets | 🟡 à brancher |
+| X / Twitter | **Abandonné (décision du 14/11)** : API officielle trop chère, pas de crédit gratuit utilisable ; scrapers tiers écartés aussi. On l'annonce comme limite au jury. | — | — | ❌ hors périmètre |
 | Bluesky | Jetstream (live, sans compte) + search (compte gratuit) | Complet | Gratuit | 🟡 à brancher |
 | Mastodon | `/timelines/tag` (sans compte) | Âge, abonnés | Gratuit | 🟡 à brancher |
 | Telegram | Canaux publics (Telethon / `telegram-mcp`), amorcés par les « Source URL » de CheckFirst | Abonnés du canal | Gratuit | 🟡 |
@@ -173,7 +176,7 @@ Règle : **les outils détectent, le LLM orchestre et explique.** Chaque outil e
 | 13 | `classify_propaganda(text) -> techniques` | Modèles HF (QCRI Prta, IDA-SERICS). **Signal, jamais preuve** |
 | 14 | `site_signals(domain) -> {rdap_age, ct_first_seen, wayback_count, whois_private, has_about, has_legal, has_authors}` | whoisit, API crt.sh, Wayback CDX, parsing HTML |
 | 15 | `ai_text_share(texts) -> {share, n, detector, tpr_at_1fpr}` | Classifieur open source sur CPU (`danibor/oculus-v2.0-multilingual` à mesurer), agrégation sur N ≥ 20. Fast-DetectGPT impossible via l'AI Router (pas de logprobs des tokens d'entrée) |
-| 17 | `discover_sites(keywords, since) -> domains[]` | GDELT DOC + Google News RSS + liens des posts + Certificate Transparency (§3.3) |
+| 17 | `discover_sites(keywords, since) -> domains[]` | Google News RSS + fichiers GDELT 15 min + liens des posts + certstream-server-go (+ Brave/Exa/Tavily en option) (§3.3) |
 | 16 | `provenance_score(target) -> {score, features[], evidence[], abstain, model_version}` | Régression logistique calibrée du §3bis, sur les sorties des outils 1, 9-12, 14, 15 |
 
 Exposition : un **serveur MCP « observer-tools »** (FastMCP) qui réutilise les serveurs existants pour la collecte : `apify/apify-mcp-server`, `chigwell/telegram-mcp`, SDK `atproto`.
@@ -268,7 +271,8 @@ Principe : **chaque score a sa vérité terrain, son jeu de test jamais vu penda
 ## 11. Questions ouvertes
 
 - Score du détecteur de texte IA open source (oculus) sur HC3 French : décide son poids.
-- Sources web liées à l'événement : disponibilité réelle de GDELT, Google News RSS, flux Certificate Transparency, listes Storm-1516/Paperwall (vérification en cours).
+- Brave / Exa / Tavily et Media Cloud : non testés ; à essayer pour la longue traîne.
+- certstream-server-go sur le VPS : à déployer et mesurer (volume, CPU).
 - Base_url exacte pour le SDK Anthropic sur l'AI Router, et streaming des modèles Claude.
 - Vitesse des embeddings et du classifieur de texte IA sur 2 vCPU.
 - Catalogue et noms de modèles de l'AI Router Hostinger.

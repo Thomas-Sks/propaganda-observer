@@ -1,0 +1,534 @@
+{
+  "version": "reliability-v1",
+  "generated_at": "2026-11-14T17:59:06Z",
+  "fpr_target": 0.02,
+  "detectors": [
+    {
+      "id": "account",
+      "name": "Account risk score",
+      "question": "Is this account likely automated or fake?",
+      "method": "Seven explainable rules (new account < 30 days; < 100 followers; follower/following ratio < 0.2 (when following ≥ 100); > 20 posts/day; default avatar; empty bio; fewer than 5 likes given). Flag when at least 3 rules fire. Rule cut-offs and the minimum count were tuned on the training half only (maximise recall with training FPR ≤ 2.0%).",
+      "threshold": "≥ 3 of 7 rules",
+      "split": "Stratified 50/50 train/test by account family, seed 42. Numbers below are on the test half.",
+      "datasets": [
+        {
+          "name": "Cresci-2017 (Bot Repository)",
+          "url": "https://botometer.osome.iu.edu/bot-repository/datasets/cresci-2017/cresci-2017.csv.zip",
+          "n": 2000,
+          "positives": 1000,
+          "negatives": 1000,
+          "note": "Balanced sample: 1,000 genuine accounts, 1,000 bots across 8 families. Twitter profiles collected 2014–2016."
+        }
+      ],
+      "test": {
+        "confusion": {
+          "tp": 177,
+          "fp": 10,
+          "tn": 490,
+          "fn": 323
+        },
+        "n": 1000,
+        "positives": 500,
+        "negatives": 500,
+        "precision": 0.9465,
+        "precision_ci": [
+          0.9044,
+          0.9707
+        ],
+        "recall": 0.354,
+        "recall_ci": [
+          0.3133,
+          0.3969
+        ],
+        "fpr": 0.02,
+        "fpr_ci": [
+          0.0109,
+          0.0364
+        ],
+        "f1": 0.5153,
+        "auc": 0.8837,
+        "auc_ci": [
+          0.8645,
+          0.9019
+        ]
+      },
+      "train": {
+        "confusion": {
+          "tp": 178,
+          "fp": 9,
+          "tn": 491,
+          "fn": 322
+        },
+        "n": 1000,
+        "positives": 500,
+        "negatives": 500,
+        "precision": 0.9519,
+        "precision_ci": [
+          0.9111,
+          0.9745
+        ],
+        "recall": 0.356,
+        "recall_ci": [
+          0.3153,
+          0.3989
+        ],
+        "fpr": 0.018,
+        "fpr_ci": [
+          0.0095,
+          0.0339
+        ],
+        "f1": 0.5182
+      },
+      "baselines": [
+        {
+          "name": "Logistic regression (9 log features)",
+          "threshold": "p > 0.650 (train FPR 2.0%)",
+          "confusion": {
+            "tp": 488,
+            "fp": 18,
+            "tn": 482,
+            "fn": 12
+          },
+          "n": 1000,
+          "positives": 500,
+          "negatives": 500,
+          "precision": 0.9644,
+          "precision_ci": [
+            0.9445,
+            0.9774
+          ],
+          "recall": 0.976,
+          "recall_ci": [
+            0.9585,
+            0.9862
+          ],
+          "fpr": 0.036,
+          "fpr_ci": [
+            0.0229,
+            0.0562
+          ],
+          "f1": 0.9702,
+          "auc": 0.9888,
+          "auc_ci": [
+            0.9815,
+            0.9947
+          ]
+        },
+        {
+          "name": "Production rules as deployed (age < 30 d or < 50 followers)",
+          "threshold": "any rule",
+          "confusion": {
+            "tp": 210,
+            "fp": 46,
+            "tn": 454,
+            "fn": 290
+          },
+          "n": 1000,
+          "positives": 500,
+          "negatives": 500,
+          "precision": 0.8203,
+          "precision_ci": [
+            0.7687,
+            0.8625
+          ],
+          "recall": 0.42,
+          "recall_ci": [
+            0.3775,
+            0.4637
+          ],
+          "fpr": 0.092,
+          "fpr_ci": [
+            0.0697,
+            0.1205
+          ],
+          "f1": 0.5556
+        }
+      ],
+      "breakdown": [
+        {
+          "label": "Genuine humans",
+          "kind": "fpr",
+          "n": 500,
+          "rate": 0.02
+        },
+        {
+          "label": "social spambots 2",
+          "kind": "recall",
+          "n": 64,
+          "rate": 1.0
+        },
+        {
+          "label": "fake followers",
+          "kind": "recall",
+          "n": 65,
+          "rate": 0.9538
+        },
+        {
+          "label": "traditional spambots 3",
+          "kind": "recall",
+          "n": 64,
+          "rate": 0.4688
+        },
+        {
+          "label": "traditional spambots 1",
+          "kind": "recall",
+          "n": 65,
+          "rate": 0.2615
+        },
+        {
+          "label": "traditional spambots 2",
+          "kind": "recall",
+          "n": 50,
+          "rate": 0.06
+        },
+        {
+          "label": "social spambots 3",
+          "kind": "recall",
+          "n": 64,
+          "rate": 0.0156
+        },
+        {
+          "label": "social spambots 1",
+          "kind": "recall",
+          "n": 64,
+          "rate": 0.0
+        },
+        {
+          "label": "traditional spambots 4",
+          "kind": "recall",
+          "n": 64,
+          "rate": 0.0
+        }
+      ],
+      "breakdown_title": "Recall by bot family (test)",
+      "errors": {
+        "false_positives": [
+          {
+            "item": "Human (genuine) · 2229 days old · 15 followers / 28 following · 0.0 posts/day · avatar custom · bio empty",
+            "reason": "Flagged because: low audience (15 followers); empty bio; almost never likes anything (0 likes)"
+          },
+          {
+            "item": "Human (genuine) · 1654 days old · 94 followers / 597 following · 0.2 posts/day · avatar custom · bio empty",
+            "reason": "Flagged because: low audience (94 followers); follows many, followed by few (94/597); empty bio"
+          },
+          {
+            "item": "Human (genuine) · 1341 days old · 26 followers / 180 following · 0.3 posts/day · avatar custom · bio empty",
+            "reason": "Flagged because: low audience (26 followers); follows many, followed by few (26/180); empty bio"
+          },
+          {
+            "item": "Human (genuine) · 2239 days old · 43 followers / 155 following · 0.0 posts/day · avatar custom · bio empty",
+            "reason": "Flagged because: low audience (43 followers); empty bio; almost never likes anything (3 likes)"
+          },
+          {
+            "item": "Human (genuine) · 108 days old · 39 followers / 15 following · 144.6 posts/day · avatar custom · bio empty",
+            "reason": "Flagged because: low audience (39 followers); high cadence (145 posts/day); empty bio"
+          }
+        ],
+        "false_negatives": [
+          {
+            "item": "traditional spambots 4 · 2574 days old · 613 followers / 303 following · 0.1 posts/day · avatar custom · bio present",
+            "reason": "Only fired: almost never likes anything (0 likes) — below the 3-rule threshold"
+          },
+          {
+            "item": "traditional spambots 2 · 71 days old · 93 followers / 91 following · 10.4 posts/day · avatar custom · bio present",
+            "reason": "Only fired: low audience (93 followers); almost never likes anything (0 likes) — below the 3-rule threshold"
+          },
+          {
+            "item": "traditional spambots 2 · 81 days old · 26 followers / 23 following · 10.0 posts/day · avatar custom · bio present",
+            "reason": "Only fired: low audience (26 followers); almost never likes anything (0 likes) — below the 3-rule threshold"
+          },
+          {
+            "item": "traditional spambots 4 · 2504 days old · 614 followers / 522 following · 0.0 posts/day · avatar custom · bio present",
+            "reason": "Only fired: almost never likes anything (0 likes) — below the 3-rule threshold"
+          },
+          {
+            "item": "traditional spambots 1 · 437 days old · 207 followers / 596 following · 0.0 posts/day · avatar custom · bio empty",
+            "reason": "Only fired: empty bio; almost never likes anything (0 likes) — below the 3-rule threshold"
+          }
+        ]
+      },
+      "limits": [
+        "Twitter-only data from 2014–2016: Bluesky, Telegram or TikTok accounts may behave differently; no labelled set exists for them.",
+        "The 'new account' rule never fires here: Cresci bots were months or years old when collected. It is kept because fresh accounts do appear in live swarms (see coordination bench).",
+        "The strongest rule here ('almost never likes anything') needs a likes-given count, which X exposes but Bluesky, Telegram and TikTok do not.",
+        "Social spambots that imitate humans are the hardest family: see the breakdown.",
+        "The rules currently deployed (age < 30 days or < 50 followers) flag 9.2% of genuine humans on this test set: they are shown as weak hints in the UI, never as an alert on their own."
+      ]
+    },
+    {
+      "id": "domains",
+      "name": "Listed-source referential",
+      "question": "Does this link point to state media or a documented influence network?",
+      "method": "Exact match (with sub-domains) against a hand-curated list of 23 domains (EU sanctions, VIGINUM, US State Dept, CheckFirst). Nothing was tuned: the list was frozen before this test.",
+      "threshold": "Exact match on the domain or a parent domain",
+      "split": "No training: every domain is held-out.",
+      "datasets": [
+        {
+          "name": "Pravda network domains (CheckFirst)",
+          "url": "https://raw.githubusercontent.com/CheckFirstHQ/pravda-network/main/json/francais.news-pravda.com_viz.json",
+          "n": 106,
+          "positives": 106,
+          "negatives": 0,
+          "note": "allDomains of the CheckFirst Pravda map"
+        },
+        {
+          "name": "Iffy+ (Iffy.news, CC BY 4.0)",
+          "url": "https://docs.google.com/spreadsheets/d/1ck1_FZC-97uDLIlvRJDTrGqBk0FuDe9yHkluROgpGS8/gviz/tq?tqx=out:csv&sheet=Iffy-news",
+          "n": 2040,
+          "positives": 2040,
+          "negatives": 0,
+          "note": "Low-credibility sites (MBFC/fact-checker based)"
+        },
+        {
+          "name": "Lin et al. 2023 domain quality (pc1 ≥ 0.8)",
+          "url": "https://raw.githubusercontent.com/hauselin/domain-quality-ratings/main/data/domain_pc1.csv",
+          "n": 1260,
+          "positives": 0,
+          "negatives": 1260,
+          "note": "High-quality outlets by expert consensus; Iffy overlaps removed"
+        }
+      ],
+      "changelog": [
+        {
+          "version": "v1",
+          "date": "2026-11-14",
+          "status": "fixed in v2",
+          "summary": "Suffix-match bug: any domain ending in 'rt.com' was labelled Russian state media. 4 false positives out of 1,260 trusted domains (FPR 0.3%).",
+          "domains": [
+            "everycrsreport.com",
+            "sciencealert.com",
+            "spectrumreport.com",
+            "techdirt.com"
+          ]
+        },
+        {
+          "version": "v2",
+          "date": "2026-11-14",
+          "status": "current",
+          "summary": "Matching restricted to the exact domain or a true sub-domain ('.' + listed domain).",
+          "domains": []
+        }
+      ],
+      "test": {
+        "confusion": {
+          "tp": 121,
+          "fp": 0,
+          "tn": 1260,
+          "fn": 2025
+        },
+        "n": 3406,
+        "positives": 2146,
+        "negatives": 1260,
+        "precision": 1.0,
+        "precision_ci": [
+          0.9692,
+          1.0
+        ],
+        "recall": 0.0564,
+        "recall_ci": [
+          0.0474,
+          0.067
+        ],
+        "fpr": 0.0,
+        "fpr_ci": [
+          0.0,
+          0.003
+        ],
+        "f1": 0.1067
+      },
+      "breakdown": [
+        {
+          "label": "Pravda network (CheckFirst)",
+          "kind": "recall",
+          "n": 106,
+          "rate": 0.9811
+        },
+        {
+          "label": "Iffy+ unreliable list",
+          "kind": "recall",
+          "n": 2040,
+          "rate": 0.0083
+        },
+        {
+          "label": "Lin et al. pc1 ≥ 0.8",
+          "kind": "fpr",
+          "n": 1260,
+          "rate": 0.0
+        }
+      ],
+      "breakdown_title": "Detection rate by source list",
+      "errors": {
+        "false_positives": [],
+        "false_negatives": [
+          {
+            "item": "francais-news--pravda-com.cdn.ampproject.org — Pravda network (CheckFirst)",
+            "reason": "Hosting or mirror domain (AMP cache, blogging platform) shared with legitimate sites: not a network domain we can list without flagging everyone on it"
+          },
+          {
+            "item": "telegra.ph — Pravda network (CheckFirst)",
+            "reason": "Hosting or mirror domain (AMP cache, blogging platform) shared with legitimate sites: not a network domain we can list without flagging everyone on it"
+          },
+          {
+            "item": "politnavigator.net — on the Iffy+ list",
+            "reason": "Not in our referential of 23 state-media / documented-network domains: Iffy+ covers general low-credibility sites, which we do not list"
+          },
+          {
+            "item": "c19melatonin.com — on the Iffy+ list",
+            "reason": "Not in our referential of 23 state-media / documented-network domains: Iffy+ covers general low-credibility sites, which we do not list"
+          },
+          {
+            "item": "americandigitalnews.com — on the Iffy+ list",
+            "reason": "Not in our referential of 23 state-media / documented-network domains: Iffy+ covers general low-credibility sites, which we do not list"
+          }
+        ]
+      },
+      "limits": [
+        "Recall on Pravda domains is trivially high: they all share the news-pravda.com parent, which is listed. It checks the matching code, not discovery.",
+        "Recall on Iffy+ is low by design: the referential only names state media and documented networks. It is one signal among several, never a verdict on its own.",
+        "False positives are near zero, which is what a referential is for: when it fires, it is right."
+      ]
+    },
+    {
+      "id": "coordination",
+      "name": "Coordination detection",
+      "question": "Is this story pushed by a coordinated swarm rather than spreading organically?",
+      "method": "Production pipeline unchanged: near-duplicate text (MinHash + RapidFuzz) and shared links → stories → explainable signals (copy burst, link burst, new accounts, cross-platform). Alert = level Review or Priority (score ≥ 0.40). Thresholds were fixed before the bench was built.",
+      "threshold": "Story score ≥ 0.40 (Review)",
+      "split": "No training on this bench. Each scenario is injected into 300 real background posts.",
+      "datasets": [
+        {
+          "name": "Injection bench (synthetic swarms + legitimate viral content)",
+          "url": null,
+          "n": 240,
+          "positives": 150,
+          "negatives": 90,
+          "note": "240 scenarios, 1716 posts, built with seed 20261114 from 1003 real texts collected for the event 'azov-torture-chambers-nov-2026'."
+        }
+      ],
+      "test": {
+        "confusion": {
+          "tp": 117,
+          "fp": 0,
+          "tn": 90,
+          "fn": 33
+        },
+        "n": 240,
+        "positives": 150,
+        "negatives": 90,
+        "precision": 1.0,
+        "precision_ci": [
+          0.9682,
+          1.0
+        ],
+        "recall": 0.78,
+        "recall_ci": [
+          0.7072,
+          0.8388
+        ],
+        "fpr": 0.0,
+        "fpr_ci": [
+          0.0,
+          0.0409
+        ],
+        "f1": 0.8764
+      },
+      "breakdown": [
+        {
+          "label": "Exact copy by new accounts",
+          "kind": "recall",
+          "n": 30,
+          "detail": "5–10 accounts created 2–25 days earlier post the same text within 20 min",
+          "rate": 1.0
+        },
+        {
+          "label": "Edited copy in a burst",
+          "kind": "recall",
+          "n": 30,
+          "detail": "5–10 aged accounts post lightly edited copies (prefix, hashtags, dropped words) within 25 min",
+          "rate": 0.9
+        },
+        {
+          "label": "Same link in a burst",
+          "kind": "recall",
+          "n": 30,
+          "detail": "4–8 aged accounts push the same link with different comments within 8 min",
+          "rate": 1.0
+        },
+        {
+          "label": "New accounts, spread over hours",
+          "kind": "recall",
+          "n": 30,
+          "detail": "4–8 accounts created < 20 days earlier post near-identical text over 3–8 h",
+          "rate": 1.0
+        },
+        {
+          "label": "Patient swarm (hard case)",
+          "kind": "recall",
+          "n": 30,
+          "detail": "5–8 aged accounts post edited copies spread over 2 days — designed to look organic",
+          "rate": 0.0
+        },
+        {
+          "label": "Wire story republished by media",
+          "kind": "fpr",
+          "n": 30,
+          "detail": "8–12 established outlets republish the same dispatch over 6 h, each with its own article link",
+          "rate": 0.0
+        },
+        {
+          "label": "Popular link shared over days",
+          "kind": "fpr",
+          "n": 30,
+          "detail": "5–10 accounts older than 1 year share the same link with their own words over 2 days",
+          "rate": 0.0
+        },
+        {
+          "label": "Official statement quoted",
+          "kind": "fpr",
+          "n": 30,
+          "detail": "5–8 accounts older than 1 year quote the same official statement over 2 h",
+          "rate": 0.0
+        }
+      ],
+      "breakdown_title": "Rate by scenario type",
+      "errors": {
+        "false_positives": [],
+        "false_negatives": [
+          {
+            "item": "Patient swarm (hard case) · 6 posts · “Tense standoff over detainment of draftees between military, civilians in Kyiv A confrontation broke out on No…”",
+            "reason": "Stayed organic: Near-identical wording, but spread over time (typical of wire copy); Seen on 2 platforms; score 0.25"
+          },
+          {
+            "item": "Edited copy in a burst · 5 posts · “Wake up: La veille des négociations ? Abu Dhabi, la «coalition des volontaires» a commencé ? travailler sur le…”",
+            "reason": "Stayed organic: 5 sources repeat the same text within 30 min, but 100% present it as a quote or wire copy from established accounts — usual in normal coverage; score 0.05"
+          },
+          {
+            "item": "Patient swarm (hard case) · 5 posts · “Must read: З важливого по темі СВО за добу: З важливого по темі СВО за добу: В Росії : Заяви прес-секретар пре…”",
+            "reason": "Stayed organic: Near-identical wording, but spread over time (typical of wire copy); score 0.10"
+          },
+          {
+            "item": "Patient swarm (hard case) · 5 posts · “La NATO si sta preparando all'utilizzo su larga scala di armi guidate di precisione La NATO si sta preparando …”",
+            "reason": "Stayed organic: Near-identical wording, but spread over time (typical of wire copy); score 0.10"
+          },
+          {
+            "item": "Patient swarm (hard case) · 6 posts · “Mecklenburg-Vorpommern bekommt erstmals Rot-Rot-Grün Mecklenburg-Vorpommern bekommt erstmals Rot-Rot-Grün Nach…”",
+            "reason": "Stayed organic: Near-identical wording, but spread over time (typical of wire copy); score 0.10"
+          }
+        ]
+      },
+      "limits": [
+        "Synthetic bench: swarms follow scripted patterns. Real operations adapt; recall here is an upper bound.",
+        "Precision depends on the mix of swarms and legitimate cases in the bench (5 swarm types, 3 legitimate types, 30 each); the false-alarm rate on legitimate cases is the number to watch.",
+        "Paraphrase and translation swarms are not in this bench (the semantic layer is not evaluated here).",
+        "Patient swarms of aged accounts spread over days are designed to evade timing rules: expect misses."
+      ]
+    }
+  ],
+  "known_limits": [
+    "Scores rank what to check first; they never prove that an account or a source is malicious.",
+    "Account data is Twitter 2014–2016; no labelled dataset exists for Bluesky, Telegram or TikTok accounts.",
+    "The coordination bench is synthetic; it measures known patterns, not novel tactics.",
+    "AI-generated-text detection and semantic (paraphrase) clustering are not evaluated yet.",
+    "Confidence intervals are Wilson 95 %; with zero observed errors the upper bound is still above zero."
+  ]
+}

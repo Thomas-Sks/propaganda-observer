@@ -1,6 +1,7 @@
 # Backlog : Propaganda Observer
 
 > Équipe : l'utilisateur + Claude. Construction en **tranches verticales** : chaque tranche marche de bout en bout et elle est déployée sur le VPS avant de passer à la suivante.
+> Phase actuelle : **développement en local**, passage sur Hostinger ensuite.
 > Priorités : **P0** = la démo ne tient pas sans · **P1** = gain net de score · **P2** = bonus.
 > Référence : [`SPECS.md`](SPECS.md), [`UI.md`](UI.md).
 
@@ -10,33 +11,34 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait · ✅ critère d'acce
 
 ## S0 : Socle et accès (P0)
 
-- [ ] Dépôt git + arborescence `api/ workers/ tools/ agents/ web/ infra/ eval/ data/`
-- [ ] `.env.example` : `HOSTINGER_AI_ROUTER_KEY`, `X_BEARER_TOKEN`, `TWITTERAPI_IO_KEY`, `YOUTUBE_API_KEY`, `APIFY_TOKEN`, `TELEGRAM_API_ID/HASH`, `BSKY_HANDLE/APP_PASSWORD`, `API_TOKEN`, `DATABASE_URL`, `REDIS_URL`
-- [ ] Docker Compose : `web` (Next.js), `api` (FastAPI), `workers` (arq), `scheduler`, `postgres` (+pgvector), `redis`, `caddy`
+- [x] Dépôt git + arborescence (`observer/{api,core,collectors,tools,agents,workers}`, `web/`, `infra/`, `eval/`, `tests/`)
+- [x] `.env.example` : `HOSTINGER_AI_ROUTER_KEY`, `X_BEARER_TOKEN`, `TWITTERAPI_IO_KEY`, `YOUTUBE_API_KEY`, `APIFY_TOKEN`, `TELEGRAM_API_ID/HASH`, `BSKY_HANDLE/APP_PASSWORD`, `API_TOKEN`, `DATABASE_URL`, `REDIS_URL`
+- [~] Docker Compose : dev local fait (`infra/docker-compose.dev.yml` : postgres+pgvector :5442, redis :6380) ; compose de prod (`web`, `api`, `workers`, `scheduler`, `caddy`) à faire au passage sur Hostinger
 - [ ] Serveur MCP Hostinger branché dans Claude Code ; VPS en template Docker ; domaine gratuit pointé ; HTTPS
-- [ ] Smoke test AI Router : un appel Claude (SDK Anthropic, `base_url` à confirmer), `whisper-1`, `text-embedding-3-small`
+- [x] Smoke test AI Router (SDK Anthropic OK, `base_url=https://router.hostinger.com` ; coût réel renvoyé dans `usage.credits_charged` ; plafond dur `LLM_BUDGET_USD` dans `observer/core/llm.py`) : un appel Claude (SDK Anthropic, `base_url` à confirmer), `whisper-1`, `text-embedding-3-small`
 - ✅ « hello world » Next.js + `/api/health` servis en HTTPS sur le domaine, déployés depuis Claude Code
 
 ## S1 : Tests de faisabilité (P0, avant de coder les collecteurs)
 
 - [ ] yt-dlp depuis l'IP du VPS (`/hashtag/<tag>/shorts`, téléchargement audio) ; sinon deno + `bgutil-ytdlp-pot-provider`
-- [ ] X : stream filtré avec 2 règles de hashtags + lookup d'auteurs (API officielle) ; TwitterAPI.io en secours
+- [~] ~~X~~ : abandonné (trop cher, pas de crédit gratuit)
 - [ ] Apify : 1 run `clockworks/tiktok-scraper` sur un hashtag ; noter les champs réellement renvoyés
 - [ ] CheckFirst `pravda-network` : format du dossier `json/`, fréquence, volume
-- [ ] GDELT DOC + Google News RSS sur des mots-clés de l'événement test
+- [x] Google News RSS (OK) et GDELT 15 min (OK) ; DOC API GDELT non fiable, certstream public mort (voir SPECS §3.3)
+- [ ] certstream-server-go auto-hébergé sur le VPS
 - [ ] Classifieur de texte IA `oculus-v2.0-multilingual` : vitesse sur 2 vCPU, premier score sur 500 exemples HC3 French
 - [ ] D3lta : installation et vitesse sur 1 000 textes
 - ✅ Chaque test consigné dans `docs/spikes.md` (commande, résultat, décision)
 
 ## S2 : Tranche 1, événement → X + YouTube → copypasta → salle d'opérations (P0)
 
-- [ ] Modèle `ContentItem` + tables Postgres (items, accounts, clusters, edges, verdicts, events)
-- [ ] Agent **Planner** : événement → mots-clés/hashtags FR+EN → validation par le volume réel → `events/<slug>.yaml`
-- [ ] Collecteurs X (stream + recherche) et YouTube (API + yt-dlp Shorts), normalisés en `ContentItem`
-- [ ] Outils `find_copypasta`, `semantic_clusters`, `detect_bursts` (z-score robuste)
-- [ ] API REST + **SSE** (`item.new`, `cluster.updated`, `stats.tick`)
-- [ ] Front : écran Lancement (3.1) + salle d'opérations minimale (flux, graphe Sigma, compteurs live)
-- ✅ Je tape « manifestations France novembre 2026 » et, en moins de 2 min, le graphe se remplit de vrais posts X et YouTube ; un cluster de textes recopiés apparaît s'il en existe
+- [~] Modèle `ContentItem` + tables Postgres (events, items, clusters faits ; accounts, edges, verdicts à venir)
+- [x] Agent **Planner** (`observer/agents/planner.py` + validation par volume Google News) : événement → mots-clés/hashtags FR+EN → validation par le volume réel → `events/<slug>.yaml`
+- [~] Collecteurs : Google News RSS ✓, YouTube + Shorts via yt-dlp sans clé ✓ (`observer/collectors/youtube.py`, fenêtre de dates filtrée) ; X abandonné ; Bluesky codé (en attente du handle) ; API YouTube officielle (âge des chaînes) quand la clé sera là
+- [~] Outils : `find_copypasta` ✓ testé, `semantic_clusters` ✓ (embeddings AI Router), fusion en histoires + verdict expliqué ✓ (`observer/tools/stories.py`) ; `detect_bursts` à faire
+- [~] API REST + **SSE** : squelette fait (`/api/health`, `/api/events…`, `/api/stream/{slug}` via Redis pub/sub)
+- [x] Front : écran Lancement + salle d'opérations en onglets (Overview, Stories, Network avec infobulles, Timeline avec période, Sources)
+- ✅ Je tape « manifestations France novembre 2026 » et, en moins de 2 min, le graphe se remplit de vrais articles, vidéos YouTube et posts Bluesky ; un cluster de textes recopiés apparaît s'il en existe
 
 ## S3 : Tranche 2, cross-plateforme (P0)
 
@@ -49,7 +51,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait · ✅ critère d'acce
 
 ## S4 : Tranche 3, sites web et provenance « Trust the source » (P0)
 
-- [ ] `discover_sites` : GDELT + Google News RSS + liens des posts, filtré par l'événement
+- [ ] `discover_sites` : Google News RSS + fichiers GDELT 15 min + liens des posts + CT, filtré par l'événement
 - [ ] `lookup_reputation` : base SQLite/Postgres des listes (Iffy, Lin, CheckFirst, VIGINUM, Meta)
 - [ ] `site_signals` (RDAP, crt.sh, Wayback CDX, à-propos/mentions/auteurs) + `expand_domain` (dnstwist, IDs GA/GTM/AdSense, urlscan)
 - [ ] `d3lta_match` : post ↔ articles découverts et articles Pravda

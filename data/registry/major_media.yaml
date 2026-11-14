@@ -1,0 +1,103 @@
+# Grands médias susceptibles d'être imités (typosquat / faux sites type Doppelganger, Storm-1516, CopyCop).
+# Mondial et multilingue : on ajoute des lignes, jamais de code. Utilisé par observer/tools/provenance.py::lookalike_of.
+# Champs : domain (domaine enregistrable), name, country (ISO 3166-1 alpha-2), lang (ISO 639-1),
+#   generic: true si la marque est un mot courant (« pravda », « zeit », « abc ») : seules les permutations dnstwist
+#   comptent alors, pas l'échange de TLD ni l'ajout d'un préfixe/suffixe (sinon faux positifs : pravda.ru, zeit.com…)
+# --- Europe de l'Ouest
+- {domain: lemonde.fr, name: Le Monde, country: FR, lang: fr}
+- {domain: lefigaro.fr, name: Le Figaro, country: FR, lang: fr}
+- {domain: liberation.fr, name: Libération, country: FR, lang: fr}
+- {domain: leparisien.fr, name: Le Parisien, country: FR, lang: fr}
+- {domain: francetvinfo.fr, name: franceinfo, country: FR, lang: fr}
+- {domain: 20minutes.fr, name: 20 Minutes, country: FR, lang: fr}
+- {domain: ouest-france.fr, name: Ouest-France, country: FR, lang: fr}
+- {domain: spiegel.de, name: Der Spiegel, country: DE, lang: de}
+- {domain: bild.de, name: Bild, country: DE, lang: de, generic: true}
+- {domain: faz.net, name: Frankfurter Allgemeine, country: DE, lang: de}
+- {domain: sueddeutsche.de, name: Süddeutsche Zeitung, country: DE, lang: de}
+- {domain: welt.de, name: Die Welt, country: DE, lang: de, generic: true}
+- {domain: tagesschau.de, name: Tagesschau, country: DE, lang: de}
+- {domain: zeit.de, name: Die Zeit, country: DE, lang: de, generic: true}
+- {domain: dw.com, name: Deutsche Welle, country: DE, lang: de}
+- {domain: theguardian.com, name: The Guardian, country: GB, lang: en}
+- {domain: bbc.co.uk, name: BBC, country: GB, lang: en}
+- {domain: bbc.com, name: BBC, country: GB, lang: en}
+- {domain: telegraph.co.uk, name: The Telegraph, country: GB, lang: en}
+- {domain: thetimes.com, name: The Times, country: GB, lang: en}
+- {domain: ft.com, name: Financial Times, country: GB, lang: en}
+- {domain: reuters.com, name: Reuters, country: GB, lang: en}
+- {domain: economist.com, name: The Economist, country: GB, lang: en}
+- {domain: elpais.com, name: El País, country: ES, lang: es}
+- {domain: elmundo.es, name: El Mundo, country: ES, lang: es}
+- {domain: abc.es, name: ABC, country: ES, lang: es, generic: true}
+- {domain: corriere.it, name: Corriere della Sera, country: IT, lang: it}
+- {domain: repubblica.it, name: la Repubblica, country: IT, lang: it}
+- {domain: ansa.it, name: ANSA, country: IT, lang: it}
+- {domain: lesoir.be, name: Le Soir, country: BE, lang: fr}
+- {domain: rtbf.be, name: RTBF, country: BE, lang: fr}
+- {domain: nos.nl, name: NOS, country: NL, lang: nl}
+- {domain: nrc.nl, name: NRC, country: NL, lang: nl}
+- {domain: srf.ch, name: SRF, country: CH, lang: de}
+- {domain: nzz.ch, name: Neue Zürcher Zeitung, country: CH, lang: de}
+- {domain: derstandard.at, name: Der Standard, country: AT, lang: de}
+- {domain: publico.pt, name: Público, country: PT, lang: pt, generic: true}
+- {domain: irishtimes.com, name: The Irish Times, country: IE, lang: en}
+- {domain: euronews.com, name: Euronews, country: EU, lang: en}
+- {domain: politico.eu, name: Politico Europe, country: EU, lang: en}
+- {domain: afp.com, name: AFP, country: FR, lang: fr}
+# --- Europe du Nord, centrale et de l'Est
+- {domain: svt.se, name: SVT, country: SE, lang: sv}
+- {domain: dn.se, name: Dagens Nyheter, country: SE, lang: sv}
+- {domain: nrk.no, name: NRK, country: NO, lang: "no"}
+- {domain: dr.dk, name: DR, country: DK, lang: da}
+- {domain: yle.fi, name: Yle, country: FI, lang: fi}
+- {domain: wyborcza.pl, name: Gazeta Wyborcza, country: PL, lang: pl}
+- {domain: onet.pl, name: Onet, country: PL, lang: pl}
+- {domain: idnes.cz, name: iDNES, country: CZ, lang: cs}
+- {domain: delfi.lt, name: Delfi, country: LT, lang: lt, generic: true}
+- {domain: err.ee, name: ERR, country: EE, lang: et}
+- {domain: lsm.lv, name: LSM, country: LV, lang: lv}
+- {domain: digi24.ro, name: Digi24, country: RO, lang: ro}
+- {domain: kathimerini.gr, name: Kathimerini, country: GR, lang: el}
+- {domain: pravda.com.ua, name: Ukrainska Pravda, country: UA, lang: uk, generic: true}
+- {domain: unian.net, name: UNIAN, country: UA, lang: uk}
+- {domain: suspilne.media, name: Suspilne, country: UA, lang: uk}
+- {domain: meduza.io, name: Meduza, country: LV, lang: ru}
+# --- Amériques
+- {domain: nytimes.com, name: The New York Times, country: US, lang: en}
+- {domain: washingtonpost.com, name: The Washington Post, country: US, lang: en}
+- {domain: washingtonexaminer.com, name: Washington Examiner, country: US, lang: en}
+- {domain: foxnews.com, name: Fox News, country: US, lang: en}
+- {domain: cnn.com, name: CNN, country: US, lang: en}
+- {domain: apnews.com, name: Associated Press, country: US, lang: en}
+- {domain: wsj.com, name: The Wall Street Journal, country: US, lang: en}
+- {domain: nbcnews.com, name: NBC News, country: US, lang: en}
+- {domain: npr.org, name: NPR, country: US, lang: en}
+- {domain: politico.com, name: Politico, country: US, lang: en}
+- {domain: cbc.ca, name: CBC, country: CA, lang: en}
+- {domain: theglobeandmail.com, name: The Globe and Mail, country: CA, lang: en}
+- {domain: globo.com, name: Globo, country: BR, lang: pt}
+- {domain: estadao.com.br, name: Estadão, country: BR, lang: pt}
+- {domain: clarin.com, name: Clarín, country: AR, lang: es}
+- {domain: eluniversal.com.mx, name: El Universal, country: MX, lang: es}
+# --- Afrique, Moyen-Orient
+- {domain: aljazeera.com, name: Al Jazeera, country: QA, lang: en}
+- {domain: news24.com, name: News24, country: ZA, lang: en, generic: true}
+- {domain: nation.africa, name: Nation, country: KE, lang: en, generic: true}
+- {domain: jeuneafrique.com, name: Jeune Afrique, country: FR, lang: fr}
+- {domain: haaretz.com, name: Haaretz, country: IL, lang: en}
+- {domain: timesofisrael.com, name: The Times of Israel, country: IL, lang: en}
+# --- Asie, Océanie
+- {domain: thehindu.com, name: The Hindu, country: IN, lang: en}
+- {domain: indiatimes.com, name: The Times of India, country: IN, lang: en}
+- {domain: ndtv.com, name: NDTV, country: IN, lang: en}
+- {domain: nhk.or.jp, name: NHK, country: JP, lang: ja}
+- {domain: asahi.com, name: Asahi Shimbun, country: JP, lang: ja}
+- {domain: scmp.com, name: South China Morning Post, country: HK, lang: en}
+- {domain: straitstimes.com, name: The Straits Times, country: SG, lang: en}
+- {domain: kompas.com, name: Kompas, country: ID, lang: id, generic: true}
+- {domain: rappler.com, name: Rappler, country: PH, lang: en}
+- {domain: yna.co.kr, name: Yonhap, country: KR, lang: ko}
+- {domain: abc.net.au, name: ABC News, country: AU, lang: en, generic: true}
+- {domain: smh.com.au, name: The Sydney Morning Herald, country: AU, lang: en}
+- {domain: nzherald.co.nz, name: NZ Herald, country: NZ, lang: en}
