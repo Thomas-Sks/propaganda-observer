@@ -279,13 +279,24 @@ def eval_domains() -> dict:
 
 # ---------------------------------------------------------------- c. Coordination (banc par injection)
 
-async def _event_items():
+_ITEMS: list | None = None
+
+
+async def _load_event_items():
     from observer.core import db
     return await db.load_items(EVENT, limit=20000)
 
 
+def event_items() -> list:
+    """Items de l'événement de référence, chargés une seule fois (une seule boucle asyncio pour la base)."""
+    global _ITEMS
+    if _ITEMS is None:
+        _ITEMS = asyncio.run(_load_event_items())
+    return _ITEMS
+
+
 def eval_coordination() -> dict:
-    items = asyncio.run(_event_items())
+    items = event_items()
     rng = random.Random(coordination.SEED)
     seeds, background = coordination.prepare_texts(items, rng)
     t0, t1 = min(i.ts for i in items), max(i.ts for i in items)
@@ -342,8 +353,99 @@ def eval_coordination() -> dict:
     }
 
 
+def eval_account_network() -> dict:
+    """Niveau COMPTE : réseau de coordination (tools/coordination.py) et comptes suspects (tools/suspects.py).
+
+    Tous les scénarios du banc d'injection sont mélangés dans un même jeu avec le bruit de fond réel, comme en
+    production. Vérité terrain : comptes des essaims = positifs ; comptes des contenus viraux légitimes (médias qui
+    reprennent une dépêche, citations officielles, lien populaire) = négatifs. Le bruit de fond réel n'a pas
+    d'étiquette fiable (il contient de vrais relais de réseaux) : son taux de signalement est donné à part."""
+    from observer.api.views import _accounts
+    from observer.tools import coordination as co
+    from observer.tools import suspects as sus
+    from observer.tools.links import find_link_shares
+    from observer.tools.stories import assess, merge
+    from observer.tools.text import find_copypasta
+
+    items = event_items()
+    rng = random.Random(coordination.SEED)
+    seeds, background = coordination.prepare_texts(items, rng)
+    t0, t1 = min(i.ts for i in items), max(i.ts for i in items)
+    scenarios = coordination.build(seeds, t0, t1)
+    pool = background + [i for sc in scenarios for i in sc.items]
+    by_uid = {i.uid: i for i in pool}
+    clusters = [assess(c, by_uid) for c in merge(find_copypasta(pool, min_authors=2) + find_link_shares(pool))]
+    accounts = _accounts(pool, clusters)
+    net = co.build(pool, accounts)
+    linked = {n["id"] for n in net["nodes"]}
+    strong = {a for e in net["edges"] if e["strong"] for a in (e["source"], e["target"])}
+    ranked = {r["id"]: r for r in sus.rank(pool, clusters, accounts, all_items=pool)}
+    likely = {a for a, r in ranked.items() if r["level"] == "likely"}
+
+    kind_of = {i.author_pseudo: sc for sc in scenarios for i in sc.items}
+    labelled = sorted(kind_of)
+    y = [int(kind_of[a].positive) for a in labelled]
+    bg = sorted({i.author_pseudo for i in background} - set(kind_of))
+
+    def measure(flagged: set[str]) -> tuple[dict, list, float]:
+        m = evaluate(y, [int(a in flagged) for a in labelled])
+        br = []
+        for kind, label, pos, desc in coordination.TYPES:
+            accs = sorted({i.author_pseudo for sc in scenarios if sc.kind == kind for i in sc.items})
+            br.append({"label": label, "kind": "recall" if pos else "fpr", "n": len(accs), "detail": desc,
+                       "rate": round(sum(a in flagged for a in accs) / max(1, len(accs)), 4)})
+        return m, br, round(sum(a in flagged for a in bg) / max(1, len(bg)), 4)
+
+    m_net, br_net, bg_net = measure(linked)
+    m_strong, _, bg_strong = measure(strong)
+    m_sus, br_sus, bg_sus = measure(likely)
+    print(f"  ↳ network (any link) P={m_net['precision']} R={m_net['recall']} FPR={m_net['fpr']} · background {bg_net}")
+    print(f"  ↳ network (strong link ≥ 2 actions) P={m_strong['precision']} R={m_strong['recall']} FPR={m_strong['fpr']} · background {bg_strong}")
+    print(f"  ↳ suspects 'likely' P={m_sus['precision']} R={m_sus['recall']} FPR={m_sus['fpr']} · background {bg_sus}")
+
+    lab = {a: accounts.get(a, {}).get("label", a) for a in labelled}
+    fps = [a for a in labelled if a in linked and not kind_of[a].positive]
+    fns = [a for a in labelled if a not in linked and kind_of[a].positive]
+    r2 = random.Random(SEED)
+    gallery = {
+        "false_positives": [{"item": f"{kind_of[a].label} · {lab[a]}",
+                             "reason": "Linked to another account: same action within the window"}
+                            for a in r2.sample(fps, min(5, len(fps)))],
+        "false_negatives": [{"item": f"{kind_of[a].label} · {lab[a]}",
+                             "reason": "Not linked: no other account did the same thing within the learnt window"}
+                            for a in r2.sample(fns, min(5, len(fns)))],
+    }
+    return {
+        "id": "account_network", "name": "Coordinated accounts (account level)",
+        "question": "Is this account acting together with other accounts?",
+        "method": "Production code unchanged. Coordination network: same own text, same link or same hashtag "
+                  f"combination within a window learnt from the data (here {net['window_s']} s, 10th percentile of "
+                  "re-share delays, CooRnet method); alert = the account has at least one link. Also reported: strong "
+                  "links only (≥ 2 shared actions) and the suspects ranking at level 'likely'.",
+        "threshold": "Account linked to ≥ 1 other account in the coordination network",
+        "split": "No training. All injected scenarios are mixed together with real background posts.",
+        "datasets": [{"name": "Injection bench, account level", "url": None, "n": len(labelled),
+                      "positives": sum(y), "negatives": len(y) - sum(y),
+                      "note": f"{len(labelled)} injected accounts from {len(scenarios)} scenarios, plus {len(bg)} "
+                              f"unlabelled background accounts from the event '{EVENT}'."}],
+        "test": m_net, "breakdown": br_net, "breakdown_title": "Share of accounts linked, by scenario type",
+        "variants": [
+            {"name": "Strong links only (≥ 2 shared actions)", **{k: m_strong[k] for k in ("precision", "recall", "fpr")}},
+            {"name": "Suspects ranking, level 'likely'", **{k: m_sus[k] for k in ("precision", "recall", "fpr")}},
+        ],
+        "background_flag_rate": {"any_link": bg_net, "strong_link": bg_strong, "suspects_likely": bg_sus},
+        "errors": gallery,
+        "limits": [
+            "Synthetic swarms: each injected swarm acts once, so 'strong links' (the same pair acting together "
+            "again) cannot appear here; in real data they are the most telling signal.",
+            f"Background accounts are unlabelled: {bg_net:.1%} of them are linked. Some are real network relays.",
+            "Patient swarms spread over days stay below the learnt window: by design they are missed.",
+        ],
+    }
+
+
 def main() -> None:
-    detectors = [eval_accounts(), eval_domains(), eval_coordination()]
+    detectors = [eval_accounts(), eval_domains(), eval_coordination(), eval_account_network()]
     out = {
         "version": VERSION,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

@@ -1,6 +1,6 @@
 {
   "version": "reliability-v1",
-  "generated_at": "2026-11-14T17:59:06Z",
+  "generated_at": "2026-11-14T20:25:59Z",
   "fpr_target": 0.02,
   "detectors": [
     {
@@ -521,6 +521,168 @@
         "Precision depends on the mix of swarms and legitimate cases in the bench (5 swarm types, 3 legitimate types, 30 each); the false-alarm rate on legitimate cases is the number to watch.",
         "Paraphrase and translation swarms are not in this bench (the semantic layer is not evaluated here).",
         "Patient swarms of aged accounts spread over days are designed to evade timing rules: expect misses."
+      ]
+    },
+    {
+      "id": "account_network",
+      "name": "Coordinated accounts (account level)",
+      "question": "Is this account acting together with other accounts?",
+      "method": "Production code unchanged. Coordination network: same own text, same link or same hashtag combination within a window learnt from the data (here 159 s, 10th percentile of re-share delays, CooRnet method); alert = the account has at least one link. Also reported: strong links only (≥ 2 shared actions) and the suspects ranking at level 'likely'.",
+      "threshold": "Account linked to ≥ 1 other account in the coordination network",
+      "split": "No training. All injected scenarios are mixed together with real background posts.",
+      "datasets": [
+        {
+          "name": "Injection bench, account level",
+          "url": null,
+          "n": 1445,
+          "positives": 1018,
+          "negatives": 427,
+          "note": "1445 injected accounts from 240 scenarios, plus 93 unlabelled background accounts from the event 'azov-torture-chambers-nov-2026'."
+        }
+      ],
+      "test": {
+        "confusion": {
+          "tp": 470,
+          "fp": 2,
+          "tn": 425,
+          "fn": 548
+        },
+        "n": 1445,
+        "positives": 1018,
+        "negatives": 427,
+        "precision": 0.9958,
+        "precision_ci": [
+          0.9847,
+          0.9988
+        ],
+        "recall": 0.4617,
+        "recall_ci": [
+          0.4313,
+          0.4924
+        ],
+        "fpr": 0.0047,
+        "fpr_ci": [
+          0.0013,
+          0.0169
+        ],
+        "f1": 0.6309
+      },
+      "breakdown": [
+        {
+          "label": "Exact copy by new accounts",
+          "kind": "recall",
+          "n": 236,
+          "detail": "5–10 accounts created 2–25 days earlier post the same text within 20 min",
+          "rate": 0.7627
+        },
+        {
+          "label": "Edited copy in a burst",
+          "kind": "recall",
+          "n": 222,
+          "detail": "5–10 aged accounts post lightly edited copies (prefix, hashtags, dropped words) within 25 min",
+          "rate": 0.7252
+        },
+        {
+          "label": "Same link in a burst",
+          "kind": "recall",
+          "n": 185,
+          "detail": "4–8 aged accounts push the same link with different comments within 8 min",
+          "rate": 0.6216
+        },
+        {
+          "label": "New accounts, spread over hours",
+          "kind": "recall",
+          "n": 176,
+          "detail": "4–8 accounts created < 20 days earlier post near-identical text over 3–8 h",
+          "rate": 0.0795
+        },
+        {
+          "label": "Patient swarm (hard case)",
+          "kind": "recall",
+          "n": 199,
+          "detail": "5–8 aged accounts post edited copies spread over 2 days — designed to look organic",
+          "rate": 0.0
+        },
+        {
+          "label": "Wire story republished by media",
+          "kind": "fpr",
+          "n": 13,
+          "detail": "8–12 established outlets republish the same dispatch over 6 h, each with its own article link",
+          "rate": 0.0
+        },
+        {
+          "label": "Popular link shared over days",
+          "kind": "fpr",
+          "n": 216,
+          "detail": "5–10 accounts older than 1 year share the same link with their own words over 2 days",
+          "rate": 0.0
+        },
+        {
+          "label": "Official statement quoted",
+          "kind": "fpr",
+          "n": 198,
+          "detail": "5–8 accounts older than 1 year quote the same official statement over 2 h",
+          "rate": 0.0101
+        }
+      ],
+      "breakdown_title": "Share of accounts linked, by scenario type",
+      "variants": [
+        {
+          "name": "Strong links only (≥ 2 shared actions)",
+          "precision": null,
+          "recall": 0.0,
+          "fpr": 0.0
+        },
+        {
+          "name": "Suspects ranking, level 'likely'",
+          "precision": 1.0,
+          "recall": 0.0472,
+          "fpr": 0.0
+        }
+      ],
+      "background_flag_rate": {
+        "any_link": 0.0753,
+        "strong_link": 0.0645,
+        "suspects_likely": 0.0645
+      },
+      "errors": {
+        "false_positives": [
+          {
+            "item": "Official statement quoted · mastodon·offici",
+            "reason": "Linked to another account: same action within the window"
+          },
+          {
+            "item": "Official statement quoted · x·offici",
+            "reason": "Linked to another account: same action within the window"
+          }
+        ],
+        "false_negatives": [
+          {
+            "item": "Patient swarm (hard case) · mastodon·patien",
+            "reason": "Not linked: no other account did the same thing within the learnt window"
+          },
+          {
+            "item": "Patient swarm (hard case) · mastodon·patien",
+            "reason": "Not linked: no other account did the same thing within the learnt window"
+          },
+          {
+            "item": "New accounts, spread over hours · mastodon·new_sl",
+            "reason": "Not linked: no other account did the same thing within the learnt window"
+          },
+          {
+            "item": "New accounts, spread over hours · bluesky·new_sl",
+            "reason": "Not linked: no other account did the same thing within the learnt window"
+          },
+          {
+            "item": "New accounts, spread over hours · x·new_sl",
+            "reason": "Not linked: no other account did the same thing within the learnt window"
+          }
+        ]
+      },
+      "limits": [
+        "Synthetic swarms: each injected swarm acts once, so 'strong links' (the same pair acting together again) cannot appear here; in real data they are the most telling signal.",
+        "Background accounts are unlabelled: 7.5% of them are linked. Some are real network relays.",
+        "Patient swarms spread over days stay below the learnt window: by design they are missed."
       ]
     }
   ],

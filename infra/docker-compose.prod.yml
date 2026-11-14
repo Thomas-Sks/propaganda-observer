@@ -1,0 +1,54 @@
+# Production sur le VPS Hostinger (Docker + Traefik préinstallés, Traefik en réseau hôte).
+# Seul « web » est exposé, en HTTPS via Traefik. L'API, Postgres et Redis restent sur le réseau interne.
+# Secrets : ../.env (API) et ../web/.env.production (Next), créés sur le serveur, jamais versionnés.
+# Lancer : docker compose -p propaganda-observer -f infra/docker-compose.prod.yml --env-file .env.compose up -d --build
+name: propaganda-observer
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: observer
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD missing}
+      POSTGRES_DB: observer
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U observer -d observer"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "300", "10", "--appendonly", "no"]
+    volumes: [redisdata:/data]
+
+  api:
+    build: { context: .., dockerfile: infra/Dockerfile.api }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://observer:${PG_PASSWORD}@postgres:5432/observer
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  web:
+    build: { context: ../web }
+    restart: unless-stopped
+    env_file: ../web/.env.production
+    environment:
+      BACKEND_URL: http://api:8010
+      AUTH_DATABASE_URL: postgresql://observer:${PG_PASSWORD}@postgres:5432/observer
+    depends_on: [api]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.observer.rule=Host(`${PUBLIC_HOST}`)
+      - traefik.http.routers.observer.entrypoints=websecure
+      - traefik.http.routers.observer.tls.certresolver=letsencrypt
+      - traefik.http.services.observer.loadbalancer.server.port=3000
+
+volumes:
+  pgdata:
+  redisdata:
