@@ -14,10 +14,21 @@ Platform = Literal["x", "youtube", "tiktok", "instagram", "facebook", "bluesky",
 Level = Literal["organic", "review", "priority", "insufficient_data"]
 
 
-def pseudonymize(platform: str, handle: str) -> str:
-    """Hash salé et stable : on ne stocke jamais le pseudo en clair dans les tables d'analyse."""
+def _salted(platform: str, handle: str) -> str:
     key = settings().pseudo_salt.encode()
     return hmac.new(key, f"{platform}:{handle.lower()}".encode(), hashlib.sha256).hexdigest()[:16]
+
+
+def rekey(salted: str) -> str:
+    """Seconde couche : HMAC avec la clé secrète PSEUDO_KEY. Elle s'applique aussi aux pseudonymes déjà stockés
+    (migration sans les pseudos d'origine), donc un même compte garde le même identifiant avant et après."""
+    k = settings().pseudo_key
+    return hmac.new(k.encode(), salted.encode(), hashlib.sha256).hexdigest()[:16] if k else salted
+
+
+def pseudonymize(platform: str, handle: str) -> str:
+    """Hash salé puis clé secrète, stable : on ne stocke jamais le pseudo en clair dans les tables d'analyse."""
+    return rekey(_salted(platform, handle))
 
 
 class AccountMeta(BaseModel):

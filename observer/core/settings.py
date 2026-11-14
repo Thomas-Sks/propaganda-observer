@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6380/0"
     api_token: str = "change-me"
     pseudo_salt: str = "change-me"
+    # Clé secrète (jamais versionnée) appliquée par-dessus le hash salé : sans elle, impossible de réidentifier
+    # un compte en hachant des pseudos candidats, même si le sel est public.
+    pseudo_key: str = ""
 
 
 @lru_cache
