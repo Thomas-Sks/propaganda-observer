@@ -1,10 +1,15 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 /* /showcase : ouvre la première observation publiée dans sa version showcase. */
 export const metadata = { robots: { index: false, follow: false } };
 
-export default async function ShowcaseIndex() {
+export default function ShowcaseIndex() {
+  return <Suspense fallback={<div className="h-screen bg-[#02060d]" />}><Go /></Suspense>;
+}
+
+async function Go() {
   await connection();
   let slug: string | null = null;
   try {
