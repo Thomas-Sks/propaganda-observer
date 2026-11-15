@@ -6,6 +6,10 @@ import { api } from "@/lib/api";
 import { Empty, Section } from "@/components/ui/kit";
 import UserMenu from "@/components/ui/UserMenu";
 import { isAdmin, useSession } from "@/lib/auth-client";
+import { getSummary, type Summary } from "@/lib/views";
+
+/* Jeu de données de référence, mis en avant pour les administrateurs (jury) après connexion. */
+const FEATURED = "mobilisations-sociales-france-automne-2026";
 
 interface EventRow { slug: string; label: string; status: string; created_at: string }
 interface PlanResult {
@@ -91,8 +95,10 @@ export default function Launch() {
             results; starting new observations and running new AI investigations is reserved to administrators.
           </div>
         )}
+        {admin && <Featured />}
         {admin && <form onSubmit={(e) => { e.preventDefault(); submit(desc); }} className="rounded-md border border-line bg-panel p-4">
-          <label className="text-[13px] font-semibold">New observation</label>
+          <label className="text-[13px] font-semibold">Or test any event you want</label>
+          <p className="mt-0.5 text-[12.5px] text-muted">Describe it in one sentence: the agent plans the search, then collection starts live. A new observation needs a few minutes to fill up.</p>
           <div className="mt-2 flex gap-2">
             <input value={desc} onChange={(e) => setDesc(e.target.value)} disabled={phase === "planning"}
               placeholder="e.g. claims about secret torture chambers near Kyiv, November 2026"
@@ -175,5 +181,36 @@ export default function Launch() {
         </Section>
       </main>
     </div>
+  );
+}
+
+/** Carte mise en avant : l'observation la plus complète, à ouvrir en premier. */
+function Featured() {
+  const [s, setS] = useState<Summary | null>(null);
+  useEffect(() => { getSummary(FEATURED).then(setS).catch(() => {}); }, []);
+  const k = s?.kpis;
+  return (
+    <Link href={`/ops/${FEATURED}`} className="group block rounded-md border-2 border-accent bg-panel p-5 shadow-sm hover:shadow-md">
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-accent px-2 py-0.5 text-[11.5px] font-semibold uppercase tracking-wide text-white">Start here</span>
+        <span className="text-[12.5px] text-muted">Our most complete dataset</span>
+      </div>
+      <div className="mt-2 text-[20px] font-semibold leading-snug">French social mobilisations, autumn 2026</div>
+      <p className="mt-1.5 max-w-[760px] text-[14px] leading-relaxed text-muted">
+        Six weeks of live collection across the web, Bluesky, YouTube, TikTok, Instagram and Telegram, in seven languages.
+        It shows everything Observer does on a real case: Pravda network relays copying each other within seconds, Telegram
+        channels posting in sync, undeclared automated accounts, and content jumping from Telegram to the web in minutes.
+        Our findings match what VIGINUM and Alliance4Europe published about the same events.
+      </p>
+      {k && (
+        <div className="num mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[13px]">
+          <span><b className="text-[16px]">{k.items.toLocaleString("en-US")}</b> posts</span>
+          <span><b className="text-[16px]">{k.accounts.toLocaleString("en-US")}</b> accounts</span>
+          <span><b className="text-[16px]">{k.stories}</b> narratives</span>
+          <span><b className="text-[16px] text-sev-priority">{k.priority + k.review}</b> to review</span>
+        </div>
+      )}
+      <div className="mt-4 inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-[14px] font-medium text-white group-hover:brightness-110">Open the French case →</div>
+    </Link>
   );
 }
