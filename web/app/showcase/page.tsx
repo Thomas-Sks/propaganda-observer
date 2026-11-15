@@ -9,7 +9,7 @@ export default function ShowcaseIndex() {
   return <Suspense fallback={<div className="h-screen bg-[#02060d]" />}><Go /></Suspense>;
 }
 
-async function Go() {
+async function Go(): Promise<null> {
   await connection();
   let slug: string | null = null;
   try {
@@ -18,4 +18,5 @@ async function Go() {
     if (r.ok) slug = ((await r.json()) as { slug: string }[])[0]?.slug ?? null;
   } catch {}
   redirect(slug ? `/showcase/${slug}` : "/");
+  return null;
 }
