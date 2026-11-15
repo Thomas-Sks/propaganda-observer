@@ -4,6 +4,7 @@ import { passes, useOps } from "@/lib/store";
 import { useView } from "@/lib/useView";
 import { PLATFORM_NAME, SEVERITY, STANCE, fmtDay, getSummary, type Stance } from "@/lib/views";
 import { FirstRun } from "./Progress";
+import { Pipeline } from "@/components/anim/Anim";
 import { Collapsible, Empty, FlagChips, Kpi, PlatformBadge, Platforms, Section, SeverityBadge, Sparkline, StackedBars, StanceChip } from "@/components/ui/kit";
 
 const ORDER: Stance[] = ["promotes", "neutral", "debunks", "unclassified"];
@@ -18,6 +19,7 @@ const ALERTS = [
 type Mode = "alerts" | "stance" | "platform";
 
 export default function Brief({ slug }: { slug: string }) {
+  const showcase = useOps((x) => x.showcase);
   const { data } = useView(() => getSummary(slug), [slug]);
   const { filters, openStory, openAccount } = useOps();
   const [mode, setMode] = useState<Mode>("alerts");
@@ -35,6 +37,7 @@ export default function Brief({ slug }: { slug: string }) {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-[1280px] space-y-6 p-6">
+        {showcase && <Pipeline slug={slug} />}
         <Collapsible title="The campaign under watch" hint={`${data.event.start} → ${data.event.end} · ${data.event.languages.join(", ").toUpperCase()}`}>
           <p className="max-w-[880px] text-[14.5px] leading-relaxed">{data.event.description}</p>
           {data.event.sources.length > 0 && (

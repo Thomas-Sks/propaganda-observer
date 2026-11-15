@@ -4,6 +4,7 @@ import { passes, useOps } from "@/lib/store";
 import { useView } from "@/lib/useView";
 import { getCoordination, type Coordination as Coord, type CoordCommunity, type CoordEdge, type CoordNode } from "@/lib/views";
 import { Empty, PlatformBadge } from "@/components/ui/kit";
+import { CoordinationAnim } from "@/components/anim/Anim";
 
 /** Une couleur par groupe (dans cet onglet seulement : la légende le dit). */
 const COMM = ["#4f46e5", "#0d9488", "#c026d3", "#ea580c", "#0284c7", "#65a30d", "#be123c", "#a16207", "#7c3aed", "#0f766e"];
@@ -12,6 +13,7 @@ const KIND = { text: "same text", link: "same link", hashtags: "same hashtags" }
 const fmt = (iso: string) => iso.slice(5, 16).replace("T", " ");
 
 export default function Coordination({ slug }: { slug: string }) {
+  const showcase = useOps((x) => x.showcase);
   const { data } = useView(() => getCoordination(slug), [slug]);
   const { filters, openAccount } = useOps();
   const [pairs, setPairs] = useState(false);
@@ -33,6 +35,7 @@ export default function Coordination({ slug }: { slug: string }) {
   return (
     <div className="h-full overflow-y-auto">
       <Header data={view} />
+      {showcase && <div className="border-b border-line bg-panel-2 p-3"><CoordinationAnim coord={view} /></div>}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line bg-panel-2 px-5 py-2 text-[12.5px] text-muted">
         <b className="text-text">How to read</b>
         <span>Each card is one group of accounts that <span className="text-text">acted together</span>.</span>

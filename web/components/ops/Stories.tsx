@@ -5,9 +5,11 @@ import { useView } from "@/lib/useView";
 import { PLATFORM_NAME, SEVERITY, STANCE, fmtTs, getStory, getSummary, type Account, type StoryDetail } from "@/lib/views";
 import { Collapsible, Empty, FlagChips, PlatformBadge, Platforms, SeverityBadge, SignalBars, Sparkline, StanceChip } from "@/components/ui/kit";
 import Investigation from "./Investigation";
+import { StoriesAnim } from "@/components/anim/Anim";
 import { HopList, fmtDelay } from "./Diffusion";
 
 export default function Stories({ slug }: { slug: string }) {
+  const showcase = useOps((x) => x.showcase);
   const { data } = useView(() => getSummary(slug), [slug]);
   const { filters, story, openStory } = useOps();
   const [q, setQ] = useState("");
@@ -16,7 +18,9 @@ export default function Stories({ slug }: { slug: string }) {
   const current = story ?? list[0]?.id ?? null;
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[400px_1fr]">
+    <div className="flex h-full min-h-0 flex-col">
+    {showcase && <div className="shrink-0 border-b border-line bg-panel-2 p-3"><StoriesAnim slug={slug} /></div>}
+    <div className="grid min-h-0 flex-1 grid-cols-[400px_1fr]">
       <aside className="flex min-h-0 flex-col border-r border-line bg-panel">
         <div className="border-b border-line p-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search narratives…"
@@ -41,6 +45,7 @@ export default function Stories({ slug }: { slug: string }) {
         </div>
       </aside>
       <div className="min-h-0 overflow-y-auto">{current ? <Detail slug={slug} id={current} /> : <div className="p-8"><Empty text="Select a narrative" /></div>}</div>
+    </div>
     </div>
   );
 }

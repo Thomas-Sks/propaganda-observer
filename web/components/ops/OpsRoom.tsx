@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useEffect } from "react";
 import { useEventStream } from "@/lib/stream";
 import { useOps, type Tab } from "@/lib/store";
 import { api } from "@/lib/api";
@@ -29,17 +30,18 @@ const TABS: { id: Tab; label: string; hint: string }[] = [
   { id: "accounts", label: "Accounts", hint: "Every account and source, with risk flags" },
 ];
 
-export default function OpsRoom({ slug, label }: { slug: string; label: string }) {
+export default function OpsRoom({ slug, label, showcase = false }: { slug: string; label: string; showcase?: boolean }) {
   const session = useSession();
   const admin = isAdmin(session.data?.user);
   const demo = !session.isPending && !admin;
   useEventStream(slug, admin);
-  const { tab, setTab, connected, status, progress } = useOps();
+  const { tab, setTab, connected, status, progress, setShowcase } = useOps();
+  useEffect(() => { setShowcase(showcase); }, [showcase, setShowcase]);
   const stopped = !!(progress?.pass as { stopped?: boolean } | undefined)?.stopped;
   return (
     <div className="flex h-screen flex-col">
       <header className="flex h-14 shrink-0 items-center gap-4 bg-navy px-5 text-white">
-        <Link href="/" className="text-[15px] font-bold tracking-[0.08em]">OBSERVER</Link>
+        <Link href={showcase ? "/showcase" : "/"} className="text-[15px] font-bold tracking-[0.08em]">{showcase ? "PROGRAMME D'OBSERVER PARA-CELSUS" : "OBSERVER"}</Link>
         <span className="h-5 w-px bg-white/25" />
         <span className="truncate text-[15px] font-medium">{label}</span>
         {demo ? <span className="ml-auto"><PublishedBadge slug={slug} /></span> : (

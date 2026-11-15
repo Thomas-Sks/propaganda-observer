@@ -10,6 +10,8 @@ export interface Progress { pass: { state?: "running" | "idle"; at?: string; nex
 interface Filters { platforms: string[]; stances: Stance[]; severities: Severity[] }
 
 interface OpsState {
+  showcase: boolean;           // version cachée /showcase : intro, animations, nom Para-Celsus
+  setShowcase: (v: boolean) => void;
   tab: Tab;
   setTab: (t: Tab) => void;
   version: number;          // incrémenté à chaque nouvelle donnée live : les vues se rechargent
@@ -30,6 +32,8 @@ interface OpsState {
 }
 
 export const useOps = create<OpsState>((set) => ({
+  showcase: false,
+  setShowcase: (showcase) => set({ showcase }),
   tab: "brief",
   setTab: (tab) => set({ tab }),
   version: 0,

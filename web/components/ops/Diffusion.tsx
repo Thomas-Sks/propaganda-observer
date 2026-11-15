@@ -3,6 +3,7 @@ import { useOps } from "@/lib/store";
 import { useView } from "@/lib/useView";
 import { PLATFORM_NAME, getDiffusion, type Flow, type Hop } from "@/lib/views";
 import { Empty, PlatformBadge } from "@/components/ui/kit";
+import { DiffusionAnim } from "@/components/anim/Anim";
 
 /* Échelle de temps logarithmique commune : 1 min → 3 jours. */
 const T_MIN = 1, T_MAX = 72 * 60;
@@ -12,6 +13,7 @@ export const fmtDelay = (m: number) => (m < 60 ? `${Math.round(m)} min` : m < 14
 const PROVEN = "#c026d3", INFERRED = "#94a3b8";
 
 export default function Diffusion({ slug }: { slug: string }) {
+  const showcase = useOps((x) => x.showcase);
   const { data } = useView(() => getDiffusion(slug), [slug]);
   if (!data) return <div className="p-8"><Empty text="Measuring how content moves between platforms…" /></div>;
   return (
@@ -27,6 +29,8 @@ export default function Diffusion({ slug }: { slug: string }) {
             </ul>
           </details>
         </div>
+
+        {showcase && <DiffusionAnim diffusion={data} />}
 
         <section className="rounded-md border border-line bg-panel">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line px-4 py-2.5 text-[12.5px] text-muted">
